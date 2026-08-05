@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scale Dev Tools — JSON, YAML, JWT, hashes and regex, all in your browser</title>
+<meta name="description" content="Free developer utilities that run entirely in your browser: JSON/YAML/CSV/XML conversion, JWT decoding, SHA hashing, UUIDs, regex testing, diffs and cron. Nothing is uploaded.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%237C3AED'/><text x='16' y='23' font-size='18' text-anchor='middle' fill='%23FBFAF6' font-family='monospace'>&lt;&gt;</text></svg>">
+<link rel="preload" as="font" type="font/woff2" href="fonts/instrument-serif-latin-400-normal.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="fonts/inter-latin-variable-normal.woff2" crossorigin>
+<link rel="stylesheet" href="base.css">
+</head>
+<body>
+<div class="wrap">
+<header>
+  <span class="eyebrow">Free · By Scale Us Technologies</span>
+  <h1>Scale <em>Dev Tools</em></h1>
+  <p class="lede">The utilities you reach for mid-debug — conversion, decoding, hashing, regex — running <strong>entirely in your browser</strong>.</p>
+  <div class="privacy"><span class="dot"></span> Nothing is uploaded. Paste a production token or payload safely — it never leaves this tab.</div>
+  <div class="siblings">More toolkits:
+    <a href="https://jasminder-chhabra.github.io/scale-tools/">PDF &amp; everyday</a>·
+    <a href="https://jasminder-chhabra.github.io/scale-image-tools/">Image</a>·
+    <a href="https://jasminder-chhabra.github.io/scale-seo-tools/">SEO &amp; business</a>
+  </div>
+  <nav id="tabs" role="tablist">
+    <button role="tab" data-p="convert" aria-selected="true">JSON · YAML · CSV · XML</button>
+    <button role="tab" data-p="jwt" aria-selected="false">JWT decoder</button>
+    <button role="tab" data-p="hash" aria-selected="false">Hashes</button>
+    <button role="tab" data-p="uuid" aria-selected="false">UUID</button>
+    <button role="tab" data-p="regex" aria-selected="false">Regex tester</button>
+    <button role="tab" data-p="url" aria-selected="false">URL encode</button>
+    <button role="tab" data-p="time" aria-selected="false">Timestamp</button>
+    <button role="tab" data-p="diff" aria-selected="false">Diff</button>
+    <button role="tab" data-p="cron" aria-selected="false">Cron</button>
+    <button role="tab" data-p="color" aria-selected="false">Colour</button>
+    <button role="tab" data-p="case" aria-selected="false">Case &amp; slug</button>
+  </nav>
+</header>
+<main>
+
+<section class="panel" id="p-convert">
+  <h2>Convert between JSON, YAML, CSV and XML</h2>
+  <p class="hint">Paste anything on the left, pick what you want out. Detection is automatic.</p>
+  <div class="card">
+    <textarea id="cvIn" placeholder='{"name":"Scale Us","products":9}'></textarea>
+    <div class="row" style="margin-top:14px">
+      <div><label class="field" for="cvFrom">From</label><select id="cvFrom">
+        <option value="auto">Detect automatically</option><option value="json">JSON</option>
+        <option value="yaml">YAML</option><option value="csv">CSV</option><option value="xml">XML</option></select></div>
+      <div><label class="field" for="cvTo">To</label><select id="cvTo">
+        <option value="json">JSON</option><option value="yaml">YAML</option>
+        <option value="csv">CSV</option><option value="xml">XML</option></select></div>
+    </div>
+    <button class="go" id="cvGo">Convert</button>
+    <button class="ghost" id="cvCopy" style="margin-left:8px">Copy result</button>
+    <div class="out" id="cvOut"></div>
+    <div class="msg" id="cvMsg"></div>
+  </div>
+</section>
+
+<section class="panel" id="p-jwt" hidden>
+  <h2>JWT decoder</h2>
+  <p class="hint">Decodes header and payload and checks expiry. Signature verification needs the secret, which stays on your server — this never asks for it.</p>
+  <div class="card">
+    <textarea id="jwtIn" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…"></textarea>
+    <button class="go" id="jwtGo">Decode</button>
+    <div class="stats" id="jwtStats"></div>
+    <div class="out" id="jwtOut"></div>
+    <div class="msg" id="jwtMsg"></div>
+  </div>
+</section>
+
+<section class="panel" id="p-hash" hidden>
+  <h2>Hash generator</h2>
+  <p class="hint">SHA-1, SHA-256, SHA-384 and SHA-512 via the browser's own WebCrypto. MD5 is deliberately absent — browsers don't implement it, and it hasn't been safe to trust for years.</p>
+  <div class="card">
+    <textarea id="hashIn" placeholder="Text to hash…"></textarea>
+    <button class="go" id="hashGo">Hash</button>
+    <div class="out" id="hashOut"></div>
+  </div>
+</section>
+
+<section class="panel" id="p-uuid" hidden>
+  <h2>UUID generator</h2>
+  <p class="hint">RFC 4122 version 4, from <code>crypto.randomUUID</code>.</p>
+  <div class="card">
+    <div class="row">
+      <div><label class="field" for="uCount">How many</label><input type="number" id="uCount" value="10" min="1" max="500"></div>
+      <div><label class="field" for="uCase">Format</label><select id="uCase">
+        <option value="lower">lowercase</option><option value="upper">UPPERCASE</option>
+        <option value="nodash">no dashes</option><option value="braces">{braced}</option></select></div>
+    </div>
+    <button class="go" id="uGo">Generate</button>
+    <button class="ghost" id="uCopy" style="margin-left:8px">Copy all</button>
+    <div class="out" id="uOut"></div>
+  </div>
+</section>
+
+<section class="panel" id="p-regex" hidden>
+  <h2>Regex tester</h2>
+  <p class="hint">Live matching with highlights and capture groups.</p>
+  <div class="card">
+    <div class="row">
+      <div style="flex:3"><label class="field" for="rePat">Pattern</label><input type="text" id="rePat" value="\b\w+@\w+\.\w+\b"></div>
+      <div style="flex:1"><label class="field" for="reFlags">Flags</label><input type="text" id="reFlags" value="gi"></div>
+    </div>
+    <label class="field" for="reIn">Test against</label>
+    <textarea id="reIn">Mail hello@scaleus.in or sales@scaleus.in for a demo.</textarea>
+    <div class="out" id="reOut"></div>
+    <div class="msg" id="reMsg"></div>
+  </div>
+</section>
+
+<section class="panel" id="p-url" hidden>
+  <h2>URL encode &amp; decode</h2>
+  <p class="hint">Component-level encoding (<code>encodeURIComponent</code>) — the one you want for query-string values.</p>
+  <div class="card">
+    <textarea id="urlIn" placeholder="https://scaleus.in/search?q=ai voice agents"></textarea>
+    <div class="row" style="margin-top:14px">
+      <button class="go" id="urlEnc" style="margin:0">Encode</button>
+      <button class="go" id="urlDec" style="margin:0">Decode</button>
+      <button class="ghost" id="urlCopy">Copy</button>
+    </div>
+    <div class="msg" id="urlMsg"></div>
+  </div>
+</section>
+
+<section class="panel" id="p-time" hidden>
+  <h2>Timestamp converter</h2>
+  <p class="hint">Unix seconds or milliseconds ⇄ human dates, in UTC and your local zone.</p>
+  <div class="card">
+    <label class="field" for="tsIn">Unix timestamp</label>
+    <input type="text" id="tsIn" placeholder="1785000000">
+    <button class="go" id="tsGo">Convert</button>
+    <button class="ghost" id="tsNow" style="margin-left:8px">Use now</button>
+    <div class="stats" id="tsStats"></div>
+    <div class="msg" id="tsMsg"></div>
+  </div>
+</section>
+
+<section class="panel" id="p-diff" hidden>
+  <h2>Text diff</h2>
+  <p class="hint">Line-by-line comparison — added lines in green, removed in red.</p>
+  <div class="card">
+    <div class="row">
+      <div><label class="field" for="dA">Original</label><textarea id="dA">line one
+line two
+line three</textarea></div>
+      <div><label class="field" for="dB">Changed</label><textarea id="dB">line one
+line two changed
+line three
+line four</textarea></div>
+    </div>
+    <button class="go" id="dGo">Compare</button>
+    <div class="stats" id="dStats"></div>
+    <div class="out" id="dOut"></div>
+  </div>
+</section>
+
+<section class="panel" id="p-cron" hidden>
+  <h2>Cron expression explainer</h2>
+  <p class="hint">Standard five-field cron: minute, hour, day-of-month, month, day-of-week.</p>
+  <div class="card">
+    <label class="field" for="cronIn">Expression</label>
+    <input type="text" id="cronIn" value="0 3 * * 1">
+    <div class="out" id="cronOut"></div>
+    <div class="msg" id="cronMsg"></div>
+  </div>
+</section>
+
+<section class="panel" id="p-color" hidden>
+  <h2>Colour converter</h2>
+  <p class="hint">HEX ⇄ RGB ⇄ HSL, with a live swatch.</p>
+  <div class="card">
+    <label class="field" for="colIn">Colour</label>
+    <input type="text" id="colIn" value="#7C3AED" placeholder="#7C3AED, rgb(124,58,237) or hsl(263,83%,58%)">
+    <div id="colSwatch" style="height:64px;border-radius:10px;border:1px solid var(--line);margin-top:14px"></div>
+    <div class="stats" id="colStats"></div>
+    <div class="msg" id="colMsg"></div>
+  </div>
+</section>
+
+<section class="panel" id="p-case" hidden>
+  <h2>Case converter &amp; slugify</h2>
+  <p class="hint">Every casing you need for variables, files and URLs.</p>
+  <div class="card">
+    <textarea id="caseIn">Scale Us Technologies — AI Voice Agents</textarea>
+    <div class="out" id="caseOut"></div>
+  </div>
+</section>
+
+</main>
+<footer>
+  Built and given away by <a href="https://scaleus.in">Scale Us Technologies</a> — AI voice agents, WhatsApp Business platforms and custom software.
+  <br>MIT-licensed and fully offline. <a href="https://github.com/Jasminder-Chhabra/scale-dev-tools">Source on GitHub</a>.
+</footer>
+</div>
+
+<script src="vendor/js-yaml.min.js"></script>
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+function say(el,t,ok=true){el.textContent=t;el.className='msg show '+(ok?'ok':'err');}
+function clearMsg(el){el.className='msg';}
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+$$('#tabs button').forEach(b=>b.onclick=()=>{
+  $$('#tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  $$('.panel').forEach(p=>p.hidden=true);
+  $('#p-'+b.dataset.p).hidden=false;
+});
+
+/* ── CSV helpers (RFC 4180: quoted fields, escaped quotes, embedded newlines) ── */
+function csvParse(text){
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++} else q=false }
+      else cur+=c;
+    }else if(c==='"') q=true;
+    else if(c===','){row.push(cur);cur=''}
+    else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur=''}
+    else if(c!=='\r') cur+=c;
+  }
+  if(cur!==''||row.length){row.push(cur);rows.push(row)}
+  return rows.filter(r=>r.length&&!(r.length===1&&r[0]===''));
+}
+function csvCell(v){
+  const s=v==null?'':String(v);
+  return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+}
+function toCSV(data){
+  const arr=Array.isArray(data)?data:[data];
+  if(!arr.length) return '';
+  if(typeof arr[0]!=='object'||arr[0]===null) return arr.map(csvCell).join('\n');
+  const cols=[...new Set(arr.flatMap(o=>Object.keys(o||{})))];
+  return [cols.join(','),...arr.map(o=>cols.map(c=>csvCell(o?.[c])).join(','))].join('\n');
+}
+function fromCSV(text){
+  const rows=csvParse(text);
+  if(rows.length<2) return rows[0]||[];
+  const [head,...rest]=rows;
+  return rest.map(r=>Object.fromEntries(head.map((h,i)=>{
+    const v=r[i]??'';
+    return [h, v!=='' && !isNaN(v) ? Number(v) : v];
+  })));
+}
+/* ── XML ── */
+function toXML(o,node='root',indent=''){
+  const tag=String(node).replace(/[^\w.-]/g,'_')||'item';
+  if(Array.isArray(o)) return o.map(v=>toXML(v,'item',indent)).join('\n');
+  if(o&&typeof o==='object')
+    return `${indent}<${tag}>\n`+Object.entries(o).map(([k,v])=>toXML(v,k,indent+'  ')).join('\n')+`\n${indent}</${tag}>`;
+  return `${indent}<${tag}>${esc(o??'')}</${tag}>`;
+}
+function fromXML(text){
+  const doc=new DOMParser().parseFromString(text,'application/xml');
+  const err=doc.querySelector('parsererror');
+  if(err) throw new Error('invalid XML');
+  const walk=n=>{
+    const els=[...n.children];
+    if(!els.length) return n.textContent.trim();
+    const o={};
+    for(const el of els){
+      const v=walk(el);
+      if(el.tagName in o){ if(!Array.isArray(o[el.tagName])) o[el.tagName]=[o[el.tagName]]; o[el.tagName].push(v) }
+      else o[el.tagName]=v;
+    }
+    return o;
+  };
+  return walk(doc.documentElement);
+}
+function detect(t){
+  const s=t.trim();
+  if(!s) return 'json';
+  if(s[0]==='{'||s[0]==='[') return 'json';
+  if(s[0]==='<') return 'xml';
+  if(/^[^\n,]+(,[^\n,]+)+\n/.test(s)) return 'csv';
+  return 'yaml';
+}
+$('#cvGo').onclick=()=>{
+  const m=$('#cvMsg');clearMsg(m);
+  const src=$('#cvIn').value, from=$('#cvFrom').value==='auto'?detect(src):$('#cvFrom').value, to=$('#cvTo').value;
+  try{
+    let data;
+    if(from==='json') data=JSON.parse(src);
+    else if(from==='yaml') data=jsyaml.load(src);
+    else if(from==='csv') data=fromCSV(src);
+    else data=fromXML(src);
+    let out;
+    if(to==='json') out=JSON.stringify(data,null,2);
+    else if(to==='yaml') out=jsyaml.dump(data);
+    else if(to==='csv') out=toCSV(data);
+    else out=toXML(data);
+    $('#cvOut').textContent=out;
+    say(m,`Converted ${from.toUpperCase()} → ${to.toUpperCase()}.`);
+  }catch(e){$('#cvOut').textContent='';say(m,`Could not parse as ${from.toUpperCase()}: ${e.message}`,false);}
+};
+$('#cvCopy').onclick=()=>navigator.clipboard.writeText($('#cvOut').textContent).then(()=>say($('#cvMsg'),'Copied.'));
+
+/* ── JWT ── */
+const b64url=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';
+  return new TextDecoder().decode(Uint8Array.from(atob(s),c=>c.charCodeAt(0)));};
+$('#jwtGo').onclick=()=>{
+  const m=$('#jwtMsg');clearMsg(m);$('#jwtStats').innerHTML='';
+  try{
+    const parts=$('#jwtIn').value.trim().split('.');
+    if(parts.length!==3) throw new Error('a JWT has three dot-separated parts');
+    const head=JSON.parse(b64url(parts[0])), body=JSON.parse(b64url(parts[1]));
+    $('#jwtOut').textContent='HEADER\n'+JSON.stringify(head,null,2)+'\n\nPAYLOAD\n'+JSON.stringify(body,null,2);
+    const now=Math.floor(Date.now()/1000);
+    const tiles=[['alg',head.alg||'—'],['type',head.typ||'—']];
+    if(body.exp){
+      const left=body.exp-now;
+      tiles.push(['expires', left>0?`in ${Math.floor(left/3600)}h ${Math.floor(left%3600/60)}m`:'EXPIRED']);
+    }
+    if(body.iat) tiles.push(['issued', new Date(body.iat*1000).toISOString().slice(0,16).replace('T',' ')]);
+    $('#jwtStats').innerHTML=tiles.map(([l,v])=>`<div class="stat"><b style="font-size:17px">${esc(v)}</b><span>${l}</span></div>`).join('');
+    say(m, body.exp&&body.exp<now ? 'Decoded — but this token has expired.' : 'Decoded.', !(body.exp&&body.exp<now));
+  }catch(e){$('#jwtOut').textContent='';say(m,'Not a readable JWT: '+e.message,false);}
+};
+
+/* ── hashes ── */
+const hex=buf=>[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+$('#hashGo').onclick=async()=>{
+  const data=new TextEncoder().encode($('#hashIn').value);
+  const out=[];
+  for(const alg of ['SHA-1','SHA-256','SHA-384','SHA-512'])
+    out.push(alg.padEnd(8)+' '+hex(await crypto.subtle.digest(alg,data)));
+  $('#hashOut').textContent=out.join('\n\n');
+};
+
+/* ── uuid ── */
+$('#uGo').onclick=()=>{
+  const n=Math.min(500,Math.max(1,+$('#uCount').value||10)),f=$('#uCase').value,out=[];
+  for(let i=0;i<n;i++){
+    let u=crypto.randomUUID();
+    if(f==='upper')u=u.toUpperCase(); else if(f==='nodash')u=u.replace(/-/g,''); else if(f==='braces')u='{'+u+'}';
+    out.push(u);
+  }
+  $('#uOut').textContent=out.join('\n');
+};
+$('#uCopy').onclick=()=>navigator.clipboard.writeText($('#uOut').textContent);
+$('#uGo').click();
+
+/* ── regex ── */
+function runRegex(){
+  const m=$('#reMsg');clearMsg(m);
+  const pat=$('#rePat').value, flags=$('#reFlags').value, text=$('#reIn').value;
+  if(!pat){$('#reOut').textContent='';return}
+  let re;
+  try{ re=new RegExp(pat, flags.includes('g')?flags:flags+'g'); }
+  catch(e){ say(m,'Invalid pattern: '+e.message,false); $('#reOut').innerHTML=''; return; }
+  let html='',last=0,count=0,groups=[];
+  for(const mt of text.matchAll(re)){
+    if(mt.index===undefined) break;
+    count++;
+    html+=esc(text.slice(last,mt.index))+'<mark>'+esc(mt[0])+'</mark>';
+    last=mt.index+mt[0].length;
+    if(mt.length>1&&groups.length<10) groups.push(`match ${count}: [${mt.slice(1).map(g=>g===undefined?'—':g).join(', ')}]`);
+    if(mt[0]==='') { last++; }            // guard against zero-length infinite loop
+    if(count>5000) break;
+  }
+  html+=esc(text.slice(last));
+  $('#reOut').innerHTML=html+(groups.length?'\n\n<span style="color:var(--ink-faint)">'+esc(groups.join('\n'))+'</span>':'');
+  say(m, count?`${count} match${count>1?'es':''}.`:'No matches.', !!count);
+}
+['#rePat','#reFlags','#reIn'].forEach(s=>$(s).addEventListener('input',runRegex));runRegex();
+
+/* ── url ── */
+$('#urlEnc').onclick=()=>{$('#urlIn').value=encodeURIComponent($('#urlIn').value);say($('#urlMsg'),'Encoded.')};
+$('#urlDec').onclick=()=>{try{$('#urlIn').value=decodeURIComponent($('#urlIn').value);say($('#urlMsg'),'Decoded.')}
+  catch(e){say($('#urlMsg'),'That contains an invalid escape sequence.',false)}};
+$('#urlCopy').onclick=()=>navigator.clipboard.writeText($('#urlIn').value).then(()=>say($('#urlMsg'),'Copied.'));
+
+/* ── timestamp ── */
+function tsGo(){
+  const m=$('#tsMsg');clearMsg(m);
+  const raw=$('#tsIn').value.trim();
+  if(!/^\d+$/.test(raw)){say(m,'Enter a Unix timestamp in seconds or milliseconds.',false);$('#tsStats').innerHTML='';return}
+  // 13 digits = ms, 10 = s. Anything else, guess by magnitude.
+  const n=Number(raw), ms=raw.length>=12?n:n*1000;
+  const d=new Date(ms);
+  if(isNaN(d)){say(m,'Out of range.',false);return}
+  $('#tsStats').innerHTML=[
+    ['UTC', d.toISOString().replace('T',' ').slice(0,19)],
+    ['local', d.toLocaleString()],
+    ['ISO 8601', d.toISOString()],
+    ['relative', rel(ms)],
+  ].map(([l,v])=>`<div class="stat"><b style="font-size:15px">${esc(v)}</b><span>${l}</span></div>`).join('');
+}
+function rel(ms){
+  const s=Math.round((ms-Date.now())/1000),a=Math.abs(s);
+  const u=[[31536000,'year'],[2592000,'month'],[86400,'day'],[3600,'hour'],[60,'minute']];
+  for(const [sec,name] of u) if(a>=sec){const v=Math.round(a/sec);return `${v} ${name}${v>1?'s':''} ${s<0?'ago':'from now'}`}
+  return 'just now';
+}
+$('#tsGo').onclick=tsGo;
+$('#tsNow').onclick=()=>{$('#tsIn').value=Math.floor(Date.now()/1000);tsGo()};
+$('#tsNow').click();
+
+/* ── diff (LCS over lines) ── */
+$('#dGo').onclick=()=>{
+  const a=$('#dA').value.split('\n'), b=$('#dB').value.split('\n');
+  const n=a.length,m2=b.length;
+  const L=Array.from({length:n+1},()=>new Uint32Array(m2+1));
+  for(let i=n-1;i>=0;i--)for(let j=m2-1;j>=0;j--)
+    L[i][j]=a[i]===b[j]?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
+  let i=0,j=0,html='',add=0,del=0,same=0;
+  while(i<n&&j<m2){
+    if(a[i]===b[j]){html+=esc(a[i])+'\n';i++;j++;same++}
+    else if(L[i+1][j]>=L[i][j+1]){html+='<del>− '+esc(a[i])+'</del>\n';i++;del++}
+    else{html+='<ins>+ '+esc(b[j])+'</ins>\n';j++;add++}
+  }
+  while(i<n){html+='<del>− '+esc(a[i++])+'</del>\n';del++}
+  while(j<m2){html+='<ins>+ '+esc(b[j++])+'</ins>\n';add++}
+  $('#dOut').innerHTML=html;
+  $('#dStats').innerHTML=`<div class="stat"><b>${add}</b><span>added</span></div>
+    <div class="stat"><b>${del}</b><span>removed</span></div>
+    <div class="stat"><b>${same}</b><span>unchanged</span></div>`;
+};
+$('#dGo').click();
+
+/* ── cron ── */
+const DOW=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function cronField(f,min,max,names){
+  if(f==='*') return null;
+  const out=[];
+  for(const part of f.split(',')){
+    let m;
+    if((m=part.match(/^\*\/(\d+)$/))) {out.push(`every ${m[1]}`);continue}
+    if((m=part.match(/^(\d+)-(\d+)\/(\d+)$/))) {out.push(`every ${m[3]} from ${m[1]} to ${m[2]}`);continue}
+    if((m=part.match(/^(\d+)-(\d+)$/))) {
+      out.push(names?`${names[+m[1]%names.length]} to ${names[+m[2]%names.length]}`:`${m[1]} to ${m[2]}`);continue}
+    if(/^\d+$/.test(part)){
+      const v=+part;
+      if(v<min||v>max) throw new Error(`${part} is out of range (${min}-${max})`);
+      out.push(names?names[v%names.length]:part);continue}
+    throw new Error(`can't read "${part}"`);
+  }
+  return out.join(', ');
+}
+function cron(){
+  const m=$('#cronMsg');clearMsg(m);
+  const f=$('#cronIn').value.trim().split(/\s+/);
+  if(f.length!==5){say(m,'A standard cron expression has exactly 5 fields.',false);$('#cronOut').textContent='';return}
+  try{
+    const [mi,h,dom,mo,dow]=f;
+    const p=[];
+    p.push(mi==='*'&&h==='*' ? 'Every minute'
+      : h==='*' ? `At minute ${cronField(mi,0,59)} of every hour`
+      : mi==='*' ? `Every minute during hour ${cronField(h,0,23)}`
+      : `At ${String(cronField(h,0,23)).padStart(2,'0')}:${String(cronField(mi,0,59)).padStart(2,'0')}`);
+    if(dom!=='*') p.push(`on day ${cronField(dom,1,31)} of the month`);
+    if(mo!=='*')  p.push(`in ${cronField(mo,1,12,['',...MON])}`);
+    if(dow!=='*') p.push(`on ${cronField(dow,0,7,DOW)}`);
+    if(dom==='*'&&mo==='*'&&dow==='*') p.push('every day');
+    $('#cronOut').textContent=p.join(', ')+'.';
+    say(m,'Valid expression.');
+  }catch(e){$('#cronOut').textContent='';say(m,'Invalid: '+e.message,false);}
+}
+$('#cronIn').addEventListener('input',cron);cron();
+
+/* ── colour ── */
+function parseColor(s){
+  s=s.trim();
+  let m;
+  if((m=s.match(/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i))){
+    let h=m[1]; if(h.length===3) h=h.split('').map(c=>c+c).join('');
+    return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16));
+  }
+  if((m=s.match(/^rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i))) return [+m[1],+m[2],+m[3]];
+  if((m=s.match(/^hsla?\(\s*([\d.]+)[,\s]+([\d.]+)%[,\s]+([\d.]+)%/i))) return hsl2rgb(+m[1],+m[2],+m[3]);
+  return null;
+}
+function hsl2rgb(h,s,l){
+  s/=100;l/=100;
+  const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
+  const f=n=>Math.round(255*(l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)))));
+  return [f(0),f(8),f(4)];
+}
+function rgb2hsl(r,g,b){
+  r/=255;g/=255;b/=255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;
+  let h=0; if(d){ h=mx===r?((g-b)/d)%6 : mx===g?(b-r)/d+2 : (r-g)/d+4; h*=60; if(h<0)h+=360; }
+  const l=(mx+mn)/2, s=d?d/(1-Math.abs(2*l-1)):0;
+  return [Math.round(h),Math.round(s*100),Math.round(l*100)];
+}
+function colour(){
+  const m=$('#colMsg');clearMsg(m);
+  const c=parseColor($('#colIn').value);
+  if(!c){say(m,'Try #7C3AED, rgb(124,58,237) or hsl(263,83%,58%).',false);$('#colStats').innerHTML='';return}
+  const [r,g,b]=c, hx='#'+c.map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase();
+  const [hh,ss,ll]=rgb2hsl(r,g,b);
+  $('#colSwatch').style.background=hx;
+  $('#colStats').innerHTML=[
+    ['HEX',hx],['RGB',`${r}, ${g}, ${b}`],['HSL',`${hh}°, ${ss}%, ${ll}%`],
+    ['CSS',`rgb(${r} ${g} ${b})`],
+  ].map(([l,v])=>`<div class="stat"><b style="font-size:15px">${esc(v)}</b><span>${l}</span></div>`).join('');
+}
+$('#colIn').addEventListener('input',colour);colour();
+
+/* ── case & slug ── */
+function words(s){
+  // Two passes: lower→Upper splits fooBar; CAPS→CapsLower splits HTMLValue into HTML + Value.
+  const t=s.replace(/([a-z0-9])([A-Z])/g,'$1 $2').replace(/([A-Z]+)([A-Z][a-z])/g,'$1 $2');
+  return (t.match(/[A-Za-z0-9]+/g)||[]).map(w=>w.toLowerCase());
+}
+function cases(){
+  const s=$('#caseIn').value, w=words(s);
+  const rows=[
+    ['camelCase', w.map((x,i)=>i?x[0].toUpperCase()+x.slice(1):x).join('')],
+    ['PascalCase', w.map(x=>x[0].toUpperCase()+x.slice(1)).join('')],
+    ['snake_case', w.join('_')],
+    ['kebab-case', w.join('-')],
+    ['CONSTANT_CASE', w.join('_').toUpperCase()],
+    ['Title Case', w.map(x=>x[0].toUpperCase()+x.slice(1)).join(' ')],
+    ['UPPERCASE', s.toUpperCase()],
+    ['lowercase', s.toLowerCase()],
+    ['url-slug', w.join('-')],
+  ];
+  $('#caseOut').innerHTML=rows.map(([l,v])=>
+    `<div style="display:flex;gap:12px;padding:4px 0"><span style="color:var(--ink-faint);min-width:120px">${l}</span><span>${esc(v)}</span></div>`).join('');
+}
+$('#caseIn').addEventListener('input',cases);cases();
+</script>
+</body>
+</html>
