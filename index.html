@@ -447,10 +447,14 @@ function cron(){
   try{
     const [mi,h,dom,mo,dow]=f;
     const p=[];
-    p.push(mi==='*'&&h==='*' ? 'Every minute'
-      : h==='*' ? `At minute ${cronField(mi,0,59)} of every hour`
-      : mi==='*' ? `Every minute during hour ${cronField(h,0,23)}`
-      : `At ${String(cronField(h,0,23)).padStart(2,'0')}:${String(cronField(mi,0,59)).padStart(2,'0')}`);
+    const plain=v=>/^\d+$/.test(v);              // a bare integer, not a range/step/list
+    const miTxt=cronField(mi,0,59), hTxt=cronField(h,0,23);
+    if(mi==='*'&&h==='*')        p.push('Every minute');
+    else if(plain(mi)&&plain(h)) p.push(`At ${h.padStart(2,'0')}:${mi.padStart(2,'0')}`);
+    else if(h==='*')             p.push(`At minute ${miTxt} of every hour`);
+    else if(mi==='*')            p.push(`Every minute during hour ${hTxt}`);
+    // Ranges/steps can't fold into "HH:MM" — describe both parts separately instead.
+    else                         p.push(`At minute ${miTxt}, during hour ${hTxt}`);
     if(dom!=='*') p.push(`on day ${cronField(dom,1,31)} of the month`);
     if(mo!=='*')  p.push(`in ${cronField(mo,1,12,['',...MON])}`);
     if(dow!=='*') p.push(`on ${cronField(dow,0,7,DOW)}`);
