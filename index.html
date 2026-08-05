@@ -316,7 +316,13 @@ $('#jwtGo').onclick=()=>{
     if(body.iat) tiles.push(['issued', new Date(body.iat*1000).toISOString().slice(0,16).replace('T',' ')]);
     $('#jwtStats').innerHTML=tiles.map(([l,v])=>`<div class="stat"><b style="font-size:17px">${esc(v)}</b><span>${l}</span></div>`).join('');
     say(m, body.exp&&body.exp<now ? 'Decoded — but this token has expired.' : 'Decoded.', !(body.exp&&body.exp<now));
-  }catch(e){$('#jwtOut').textContent='';say(m,'Not a readable JWT: '+e.message,false);}
+  }catch(e){
+    $('#jwtOut').textContent='';
+    // A raw JSON.parse/atob message here is noise ("Unexpected token '�'").
+    const friendly=/three dot-separated/.test(e.message) ? e.message
+      : "the header and payload aren't valid Base64URL-encoded JSON";
+    say(m,'Not a readable JWT — '+friendly+'.',false);
+  }
 };
 
 /* ── hashes ── */
@@ -448,13 +454,22 @@ function cron(){
     const [mi,h,dom,mo,dow]=f;
     const p=[];
     const plain=v=>/^\d+$/.test(v);              // a bare integer, not a range/step/list
-    const miTxt=cronField(mi,0,59), hTxt=cronField(h,0,23);
-    if(mi==='*'&&h==='*')        p.push('Every minute');
-    else if(plain(mi)&&plain(h)) p.push(`At ${h.padStart(2,'0')}:${mi.padStart(2,'0')}`);
-    else if(h==='*')             p.push(`At minute ${miTxt} of every hour`);
-    else if(mi==='*')            p.push(`Every minute during hour ${hTxt}`);
-    // Ranges/steps can't fold into "HH:MM" — describe both parts separately instead.
-    else                         p.push(`At minute ${miTxt}, during hour ${hTxt}`);
+    const step=v=>(v.match(/^\*\/(\d+)$/)||[])[1];
+    // Minute and hour only fold into "HH:MM" when both are bare integers; every
+    // other shape (step, range, list) needs its own phrasing to read as English.
+    const miStep=step(mi), hStep=step(h);
+    let lead;
+    if(mi==='*'&&h==='*')            lead='Every minute';
+    else if(plain(mi)&&plain(h))     lead=`At ${h.padStart(2,'0')}:${mi.padStart(2,'0')}`;
+    else if(miStep)                  lead=`Every ${miStep} minutes`;
+    else if(mi==='*')                lead='Every minute';
+    else                             lead=`At minute ${cronField(mi,0,59)}`;
+    if(!(plain(mi)&&plain(h))){
+      if(h==='*')      lead+=' of every hour';
+      else if(hStep)   lead+=`, every ${hStep} hours`;
+      else             lead+=`, between hours ${cronField(h,0,23)}`;
+    }
+    p.push(lead);
     if(dom!=='*') p.push(`on day ${cronField(dom,1,31)} of the month`);
     if(mo!=='*')  p.push(`in ${cronField(mo,1,12,['',...MON])}`);
     if(dow!=='*') p.push(`on ${cronField(dow,0,7,DOW)}`);
